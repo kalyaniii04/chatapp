@@ -1,0 +1,126 @@
+.UserCard {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0.8rem 0;
+}
+
+.UserCard_box {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    background: #1e1e2f;
+    border: 1px solid #2e2e42;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    width: 85%;
+    max-width: 380px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.UserCard_box:hover {
+    transform: translateY(-3px);
+    border-color: #4f46e5;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+}
+
+/* ✅ Round, slightly bigger image */
+.UserCard_box img {
+    border-radius: 50%;
+    object-fit: cover;
+    width: 90px;
+    height: 90px;
+    border: 2px solid #F18303;
+    transition: transform 0.3s ease;
+}
+
+.UserCard_box img:hover {
+    transform: scale(1.05);
+}
+
+.UserCard_box_info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3rem;
+}
+
+.UserCard_box_info h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.UserCard_box_info p {
+    font-size: 0.8rem;
+    color: #bfbfbf;
+    margin: 0;
+    letter-spacing: 0.2px;
+}
+
+.UserCard_box_info button {
+    background: rgba(0, 0, 0, 0.25);
+    color: #F18303;
+    border: none;
+    outline: none;
+    border-radius: 6px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 0.4rem;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.UserCard_box_info button:hover {
+    background: #6366f1;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.number {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: #F18303;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50%;
+}
+
+/* 🔹 Responsive Design */
+@media screen and (max-width: 600px) {
+    .UserCard_box {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 90%;
+        padding: 0.8rem 1rem;
+    }
+
+    .UserCard_box img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .UserCard_box_info h2 {
+        font-size: 0.95rem;
+    }
+
+    .UserCard_box_info p {
+        font-size: 0.7rem;
+    }
+
+    .UserCard_box_info button {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    .number {
+        top: 6px;
+        right: 6px;
+    }
+}

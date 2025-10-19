@@ -1,0 +1,41 @@
+.Error {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999999;
+    width: 40%;
+    max-width: 500px;
+    background: #F18303;
+    color: #fff;
+    text-align: center;
+    border-radius: 30px;
+    padding: 2rem;
+    box-shadow: 5px 5px 15px #cd6f03, -5px -5px 15px #ff9703;
+}
+
+/* Inner content box (optional, for styling text separately) */
+.Error_box {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.Error_box h1 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+
+/* Responsive for small screens */
+@media only screen and (max-width: 35em) {
+    /* .Error {
+        width: 60%;
+        padding: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .Error_box h1 {
+        font-size: 1.1rem;
+    } */
+}

@@ -1,0 +1,104 @@
+/* Filter.module.css */
+
+.Filter {
+    width: 90%;
+    margin: 1rem auto;
+    padding: 1rem;
+    background-color: #1e1e2f;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.Filter_box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.Filter_box_left {
+    flex: 1;
+}
+
+.Filter_box_left_search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #2e2e42;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.Filter_box_left_search_img {
+    cursor: pointer;
+}
+
+.Filter_box_left_search_input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f5f5f5;
+    font-size: 1rem;
+}
+
+.Filter_box_left_search_input::placeholder {
+    color: #b0b0b0;
+}
+
+.Filter_box_right {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.Filter_box_right button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: rgba(241, 131, 3, 0.1);
+    color: #f18303;
+    border: none;
+    outline: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Filter_box_right button:hover {
+    background-color: rgba(241, 131, 3, 0.25);
+}  
+
+.Filter_model {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #292F3F;
+    /* dark overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+/* Responsive */
+@media only screen and (max-width: 35em) {
+    .Filter_box {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .Filter_box_right button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .Filter_model {
+        width: 95%;
+    }
+}
