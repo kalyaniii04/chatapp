@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "clear": "rm -rf node_modules package-lock.json .next",
+    "deploy": "npx hardhat run scripts/deploy.js --network holesky",
+    "deploy:local": "npx hardhat run scripts/deploy.js --network localhost",
+    "node": "npx hardhat node"
   },
   "dependencies": {
     "ethers": "^6.15.0",
@@ -16,6 +20,8 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "hardhat": "^2.26.3"
+    "dotenv": "^17.2.3",
+    "hardhat": "^2.26.3",
+    "hardhat-deploy": "^1.0.4"
   }
 }

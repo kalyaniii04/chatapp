@@ -45,41 +45,43 @@ export const ChatAppProvider = ({ children }) => {
     try {
       setLoading(true);
 
-      const contract = await connectWithContract();
+      // 1️⃣ Connect wallet
       const connectAccount = await connectWallet();
-
       if (!connectAccount) {
         setError("Please connect your wallet first.");
         return;
       }
-
       setAccount(connectAccount);
 
-      // ✅ Step 1: Check if user exists
-      const isUserExist = await contract.checkUserExist(connectAccount);
+      // 2️⃣ Connect contract with signer
+      const contract = await connectWithContract(true);
+      if (!contract) throw new Error("Contract not connected");
 
+      // 3️⃣ Check if user exists
+      console.log("Attempting to check user for address:", connectAccount);
+      const isUserExist = await contract.checkUserExist(connectAccount);
       if (!isUserExist) {
-        setError("Create your account first.");
+        setError("Please create your account first.");
         setFriendLists([]);
         setUserLists([]);
         setUserName("");
         return;
       }
 
-      // ✅ Step 2: Fetch user-related data (only if user exists)
+      // 4️⃣ Fetch user-related data
       const [friends, users, name] = await Promise.all([
         contract.getMyFriendList(),
         contract.getAllAppUser(),
         contract.getUsername(connectAccount),
       ]);
 
-      // ✅ Step 3: Update state safely
+      // 5️⃣ Update state
       setFriendLists(friends || []);
       setUserLists(users || []);
       setUserName(name || "");
       setError("");
     } catch (err) {
-      console.error("Error in fetchData:", err);
+      console.error("fetchData error:", err);
       setError("Something went wrong while loading data. Please try again.");
     } finally {
       setLoading(false);
@@ -102,20 +104,23 @@ export const ChatAppProvider = ({ children }) => {
         return setError("Name and account address cannot be empty.");
       }
 
-      const contract = await connectWithContract();
+      const contract = await connectWithContract(true); // signer needed
       const alreadyExists = await contract.checkUserExist(accountAddress);
-
       if (alreadyExists) {
-        return setError("User already exists. Try logging in instead.");
+        return setError("User already exists. Try logging in.");
       }
 
-      const tx = await contract.createAccount(name);
       setLoading(true);
+      const tx = await contract.createAccount(name);
       await tx.wait();
-      window.location.reload();
+
+      // Update state locally instead of reload
+      setAccount(accountAddress);
+      setUserName(name);
+      setError("");
     } catch (err) {
       console.error("Create Account Error:", err);
-      setError("Error while creating your account, please reload the browser.");
+      setError("Error creating your account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -126,11 +131,11 @@ export const ChatAppProvider = ({ children }) => {
   // -------------------------------
   const addFriend = async ({ name, accountAddress }) => {
     try {
-      // if (!name || !accountAddress) {
-      //   return setError("Please provide valid name and account address.");
-      // }
+      if (!name || !accountAddress) {
+        return setError("Provide valid name and account address.");
+      }
 
-      const contract = await connectWithContract();
+      const contract = await connectWithContract(true);
       await ensureUserAccount(contract, account);
 
       const isFriendExist = await contract.checkUserExist(accountAddress);
@@ -138,15 +143,18 @@ export const ChatAppProvider = ({ children }) => {
         return setError("This user has not created an account yet.");
       }
 
-      const tx = await contract.addFriend(accountAddress, name);
       setLoading(true);
+      const tx = await contract.addFriend(accountAddress, name);
       await tx.wait();
 
+      // Update friend list locally
+      const updatedFriends = await contract.getMyFriendList();
+      setFriendLists(updatedFriends || []);
+      setError("");
       router.push("/");
-      window.location.reload();
     } catch (err) {
       console.error("Add Friend Error:", err);
-      setError("Something went wrong while adding friends. Try again.");
+      setError("Failed to add friend. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -161,7 +169,7 @@ export const ChatAppProvider = ({ children }) => {
         return setError("Please type your message before sending.");
       }
 
-      const contract = await connectWithContract();
+      const contract = await connectWithContract(true);
       await ensureUserAccount(contract, account);
 
       const isFriendExist = await contract.checkUserExist(address);
@@ -169,11 +177,13 @@ export const ChatAppProvider = ({ children }) => {
         return setError("This friend has not created an account yet.");
       }
 
-      const tx = await contract.sendMessage(address, msg);
       setLoading(true);
+      const tx = await contract.sendMessage(address, msg);
       await tx.wait();
 
-      window.location.reload();
+      // Optionally fetch messages immediately
+      await readMessage(address);
+      setError("");
     } catch (err) {
       console.error("Send Message Error:", err);
       setError("Unable to send message. Please check if you’re friends first.");
@@ -187,14 +197,15 @@ export const ChatAppProvider = ({ children }) => {
   // -------------------------------
   const readMessage = async (friendAddress) => {
     try {
-      const contract = await connectWithContract();
+      const contract = await connectWithContract(true);
       await ensureUserAccount(contract, account);
 
       const messages = await contract.readMessages(friendAddress);
-      setFriendMsg(messages);
+      setFriendMsg(messages || []);
+      setError("");
     } catch (err) {
       console.error("Read Message Error:", err);
-      setError("Currently you have no messages or not connected to a friend.");
+      setError("No messages or not connected to a friend.");
     }
   };
 
@@ -203,9 +214,8 @@ export const ChatAppProvider = ({ children }) => {
   // -------------------------------
   const readUser = async (userAddress) => {
     try {
-      const contract = await connectWithContract();
+      const contract = await connectWithContract(true);
       const isUserExist = await contract.checkUserExist(userAddress);
-
       if (!isUserExist) {
         return setError("Selected user does not exist.");
       }
@@ -213,19 +223,21 @@ export const ChatAppProvider = ({ children }) => {
       const userName = await contract.getUsername(userAddress);
       setCurrentUserName(userName);
       setCurrentUserAddress(userAddress);
+      setError("");
     } catch (err) {
       console.error("Read User Error:", err);
-      setError("Unable to fetch user data. Please try again.");
+      setError("Unable to fetch user data.");
     }
   };
 
+  // -------------------------------
   // 💬 Clear Chat
-const clearChat = () => {
-  setFriendMsg([]); // clear messages locally
-};
+  // -------------------------------
+  const clearChat = () => setFriendMsg([]);
 
-
+  // -------------------------------
   // 🌐 Context Provider
+  // -------------------------------
   return (
     <ChatAppContext.Provider
       value={{

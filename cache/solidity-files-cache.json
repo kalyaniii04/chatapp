@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\kalya\\OneDrive\\Desktop\\PROJECTS\\BLOCKCHAIN\\chatapp\\my-next-app\\contracts\\ChatApp.sol": {
-      "lastModificationDate": 1760665525733,
+      "lastModificationDate": 1761036961492,
       "contentHash": "eb19e89e9ec6f1f8a6139ec6750251ba",
       "sourceName": "contracts/ChatApp.sol",
       "solcConfig": {
@@ -20,12 +20,19 @@
                 "evm.bytecode",
                 "evm.deployedBytecode",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
               ],
               "": [
                 "ast"
               ]
             }
+          },
+          "metadata": {
+            "useLiteralContent": true
           }
         }
       },

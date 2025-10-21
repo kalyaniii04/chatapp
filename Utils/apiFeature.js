@@ -1,6 +1,8 @@
 import { BrowserProvider, Contract } from "ethers";
 import Web3Modal from "web3modal";
-import { ChatAppAddress, ChatAppABI } from "../Context/constants";
+import chatAppJSON from "../Context/ChatApp.json"; // ABI
+
+export const ChatAppABI = chatAppJSON.abi;
 
 // ✅ Cache for provider to prevent repeated popups
 let web3Modal;
@@ -17,29 +19,13 @@ const getWeb3Modal = () => {
   return web3Modal;
 };
 
-// ✅ Check if wallet is connected
-export const CheckIfWalletConnected = async () => {
-  try {
-    if (!window.ethereum) {
-      console.log("🦊 Install MetaMask extension to continue.");
-      return null;
-    }
-    const accounts = await window.ethereum.request({ method: "eth_accounts" });
-    return accounts.length ? accounts[0] : null;
-  } catch (error) {
-    console.error("❌ Error checking wallet connection:", error);
-    return null;
-  }
-};
-
-// ✅ Manually connect wallet
+// ✅ Connect wallet
 export const connectWallet = async () => {
   try {
     if (!window.ethereum) {
       alert("Please install MetaMask extension.");
       return null;
     }
-
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
@@ -50,31 +36,49 @@ export const connectWallet = async () => {
   }
 };
 
-// ✅ Helper: Create contract instance
-const fetchContract = (signerOrProvider) => {
-  return new Contract(ChatAppAddress, ChatAppABI, signerOrProvider);
+// ✅ Helper: Get contract for a specific network
+const fetchContract = async (provider, signer = null) => {
+  const network = await provider.getNetwork();
+  console.log("🌐 Connected network:", network);
+
+  let ChatAppAddress;
+
+  if (network.chainId === 17000n) { // Holesky
+    ChatAppAddress = "0x15696678D8ca6668aF096C871C8d0FC4c816037a"; // replace with actual <-----<-----<-----
+  } else if (network.chainId === 31337n) { // Localhost
+    const deployment = require("../deployments/localhost/ChatApp.json");
+    ChatAppAddress = deployment.address;
+  } else {
+    throw new Error("Unsupported network. Please switch to Holesky or localhost.");
+  }
+
+  return new Contract(ChatAppAddress, ChatAppABI, signer || provider);
 };
 
-// ✅ Connect with contract (either with provider or signer)
+
+// ✅ Connect with contract (provider + signer)
 export const connectWithContract = async (needSigner = true) => {
   try {
     const web3Modal = getWeb3Modal();
-
-    // 🔄 Use cached connection if available (avoids re-popup)
     const connection = cachedConnection || (await web3Modal.connect());
     if (!cachedConnection) cachedConnection = connection;
 
-    // Ethers v6: Use BrowserProvider instead of Web3Provider
     const provider = new BrowserProvider(connection);
 
-    if (needSigner) {
-      const signer = await provider.getSigner();
-      const contract = fetchContract(signer);
-      return contract;
-    } else {
-      const contract = fetchContract(provider);
-      return contract;
+    // ✅ Ensure we are on Holesky
+    const network = await provider.getNetwork();
+    if (network.chainId !== 17000 && network.chainId !== 31337) {
+      try {
+        await provider.send("wallet_switchEthereumChain", [
+          { chainId: "0x4268" }, // 17000 in hex
+        ]);
+      } catch (switchError) {
+        console.error("Switch to Holesky failed:", switchError);
+      }
     }
+
+    const signer = needSigner ? await provider.getSigner() : null;
+    return await fetchContract(provider, signer);
   } catch (error) {
     console.error("❌ Error connecting with contract:", error);
     return null;
@@ -85,17 +89,14 @@ export const connectWithContract = async (needSigner = true) => {
 export const convertTime = (time) => {
   try {
     const newTime = new Date(Number(time) * 1000);
-    const formatted = `${newTime.getHours()}:${newTime.getMinutes()}:${newTime.getSeconds()}  |  ${newTime.getDate()}/${
-      newTime.getMonth() + 1
-    }/${newTime.getFullYear()}`;
-    return formatted;
+    return `${newTime.getHours()}:${newTime.getMinutes()}:${newTime.getSeconds()}  |  ${newTime.getDate()}/${newTime.getMonth() + 1}/${newTime.getFullYear()}`;
   } catch (error) {
     console.error("❌ Time conversion error:", error);
     return "Invalid Time";
   }
 };
 
-// ✅ Clear cache if user disconnects wallet manually
+// ✅ Clear Web3Modal cache
 export const resetWeb3Cache = async () => {
   try {
     const web3Modal = getWeb3Modal();
