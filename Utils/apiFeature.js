@@ -4,8 +4,21 @@ import chatAppJSON from "../Context/ChatApp.json";
 
 export const ChatAppABI = chatAppJSON.abi;
 
+// ─────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────
+
+const HOLESKY_CHAIN_ID = 17000n;
+const LOCAL_CHAIN_ID = 31337n;
+
+const HOLESKY_ADDRESS = "0x15696678D8ca6668aF096C871C8d0FC4c816037a";
+
 let web3Modal;
-let cachedConnection;
+let cachedConnection = null;
+
+// ─────────────────────────────────────────────
+// Web3Modal singleton
+// ─────────────────────────────────────────────
 
 const getWeb3Modal = () => {
   if (!web3Modal) {
@@ -16,11 +29,13 @@ const getWeb3Modal = () => {
   return web3Modal;
 };
 
-// ✅ Connect wallet
+// ─────────────────────────────────────────────
+// Wallet connection
+// ─────────────────────────────────────────────
+
 export const connectWallet = async () => {
   if (!window.ethereum) {
-    alert("Please install MetaMask");
-    return null;
+    throw new Error("MetaMask is not installed");
   }
 
   const accounts = await window.ethereum.request({
@@ -30,57 +45,75 @@ export const connectWallet = async () => {
   return accounts[0];
 };
 
-// ✅ Get contract safely
-const fetchContract = async (provider, signer = null) => {
-  let network;
+// ─────────────────────────────────────────────
+// Resolve contract address
+// ─────────────────────────────────────────────
 
-  try {
-    network = await provider.getNetwork();
-  } catch {
-    return null;
+const resolveContractAddress = async (provider) => {
+  const network = await provider.getNetwork();
+
+  if (network.chainId === HOLESKY_CHAIN_ID) {
+    return HOLESKY_ADDRESS;
   }
 
-  let address;
-
-  if (network.chainId === 17000n) {
-    address = "0x15696678D8ca6668aF096C871C8d0FC4c816037a"; // Holesky
-  } else if (network.chainId === 31337n) {
+  if (network.chainId === LOCAL_CHAIN_ID) {
     const deployment = require("../deployments/localhost/ChatApp.json");
-    address = deployment.address;
-  } else {
-    throw new Error("Unsupported network");
+    return deployment.address;
+  }
+
+  throw new Error("Unsupported network");
+};
+
+// ─────────────────────────────────────────────
+// Contract factory
+// ─────────────────────────────────────────────
+
+const getContract = async (provider, signer = null) => {
+  const address = await resolveContractAddress(provider);
+
+  const code = await provider.getCode(address);
+  if (code === "0x") {
+    throw new Error("Contract not deployed on this network");
   }
 
   return new Contract(address, ChatAppABI, signer || provider);
 };
 
-// ✅ Connect with contract (NO network error)
+// ─────────────────────────────────────────────
+// Main connector (READ / WRITE)
+// ─────────────────────────────────────────────
+
 export const connectWithContract = async (needSigner = true) => {
   const modal = getWeb3Modal();
   const connection = cachedConnection || (await modal.connect());
   cachedConnection = connection;
 
-  // ✅ "any" mode prevents NETWORK_ERROR
-  const provider = new BrowserProvider(connection, "any");
+  const provider = new BrowserProvider(connection);
+  const network = await provider.getNetwork();
 
-  // ✅ Switch FIRST
-  try {
-    await provider.send("wallet_switchEthereumChain", [
-      { chainId: "0x4268" }, // Holesky
-    ]);
-  } catch (_) {}
+  // ✅ DO NOT FORCE NETWORK
+  if (
+    network.chainId !== LOCAL_CHAIN_ID &&
+    network.chainId !== HOLESKY_CHAIN_ID
+  ) {
+    throw new Error(
+      "Please switch MetaMask to Localhost (31337) or Holesky (17000)"
+    );
+  }
 
   const signer = needSigner ? await provider.getSigner() : null;
-  return fetchContract(provider, signer);
+  return getContract(provider, signer);
 };
 
-// ✅ Time helper
+// ─────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────
+
 export const convertTime = (time) => {
-  const d = new Date(Number(time) * 1000);
-  return `${d.toLocaleTimeString()} | ${d.toLocaleDateString()}`;
+  const date = new Date(Number(time) * 1000);
+  return `${date.toLocaleTimeString()} | ${date.toLocaleDateString()}`;
 };
 
-// ✅ Clear cache
 export const resetWeb3Cache = async () => {
   const modal = getWeb3Modal();
   await modal.clearCachedProvider();
